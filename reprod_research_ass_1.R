@@ -22,17 +22,13 @@ actData <- read.csv("./activity_data/activity.csv",
                     colClasses=c("numeric",
                                  "character",
                                  "numeric"))
-
+rawActData <- actData
 
 ## Preprocess the data
 ## - Remove any rows with an NA value in a column
 actData <- actData[!is.na(actData$steps),]
 actData <- actData[!is.na(actData$date),]
 actData <- actData[!is.na(actData$interval),]
-
-## - Remove any rows where the number of steps is
-##   zero.
-actData <- actData[!(actData$steps==0),]
 
 ## Calculate the mean total number of steps taken
 ## per day
@@ -105,3 +101,36 @@ fiveMinIntPlot <- plot(x=actData5minInt$interval,
 ##    number of steps.
 d <- actData5minInt[actData5minInt$meanSteps>184,]["interval"][1,1]
 intervalWithMaxAverage <- d[[1,1]]
+
+
+## Imputing missing values
+
+## 1. Calculate and report the total number 
+##    of missing values in the dataset.
+
+tmp <- rawActData[(is.na(rawActData$steps)) |
+                  (is.na(rawActData$date)) |
+                  (is.na(rawActData$interval)),]
+numberOfRowsWithNA <- length(tmp[,"steps"])
+
+## 2. Fill in missing steps (i.e. where steps is
+##    NA). Use the average for the given interval
+##    of the day. This is already in the 
+##    'actData5minInt' data frame.
+
+tmp2 <- tmp
+for (i in 1:length(tmp2[,1])) {
+  print(i)
+  tmp2[i,"steps"]<-round(actData5minInt[actData5minInt$interval==tmp2[i,"interval"],][,"meanSteps"][[1,1]])
+}
+
+tmp <- actData
+for (i in 1:length(tmp[,1])) {
+  if (is.na(tmp[i,"steps"])) {
+    tmp[i,"steps"]<-round(actData5minInt[actData5minInt$interval==tmp[i,"interval"],][,"meanSteps"][[1,1]])
+  }
+}
+imputedData <- tmp
+
+
+
