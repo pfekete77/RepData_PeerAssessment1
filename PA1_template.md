@@ -1,10 +1,5 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-author: "Paul Fekete"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
+Paul Fekete  
 
 
 ## Loading and preprocessing the data
@@ -12,17 +7,18 @@ output:
 The data is stored in the activity.zip file which has been downloaded from https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip
 
 The data is unzipped into the 'activity_data' directory.
-```{r loadingAndPreProcessingData }
+
+```r
 if (!dir.exists("activity_data")) {
   dir.create("activity_data")
   unzip("activity.zip",exdir="activity_data")
 }
-
 ```
 
 The file 'activity.csv' is read from the activity_data directory and stored into an object called actData.
 
-```{r}
+
+```r
 actData <- read.csv("./activity_data/activity.csv",
                     colClasses=c("numeric",
                                  "character",
@@ -32,7 +28,8 @@ rawActData <- actData
 
 The data is preprocessed to remove any rows with NAs in the variables.
 
-```{r}
+
+```r
 actData <- actData[!is.na(actData$steps),]
 actData <- actData[!is.na(actData$date),]
 actData <- actData[!is.na(actData$interval),]
@@ -42,11 +39,31 @@ actData <- actData[!is.na(actData$interval),]
 
 Firstly, the number of steps are added up for each day. This is stored in an object called 'actData_byDay'.
 
-```{r}
+
+```r
 ## 1. Add up number of steps for each day
 library(lubridate)
 library(dplyr)
+```
 
+```
+## 
+## Attaching package: 'dplyr'
+## 
+## The following objects are masked from 'package:lubridate':
+## 
+##     intersect, setdiff, union
+## 
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+## 
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+```r
 tmp <- data.frame(actData)
 tmp <- data.frame(steps=actData$steps,
         date=parse_date_time(actData$date,"%y-%m-%d"))
@@ -59,7 +76,8 @@ actData_byDay <- summarise(actData_byDay,
 
 A histogram is constructed to show the total steps per day.
 
-```{r makeHistogram }
+
+```r
 ## 2. Make a histogram of the total number of
 ##    steps taken per day.
 library(ggplot2)
@@ -76,19 +94,18 @@ stepsHist <- qplot(tmp2_forHist,
 
 This is the histogram:
 
-```{r echo=FALSE}
-stepsHist
-```
+![](PA1_template_files/figure-html/unnamed-chunk-4-1.png) 
 
 The mean and median of the total number of steps taken per day are calculated.
-```{r}
+
+```r
 meanStepsTakenPerDay = mean(actData_byDay$totalStepsPerDay)
 medianStepsTakenPerDay = median(actData_byDay$totalStepsPerDay)
 ```
 
-The mean of the total number of steps taken per day is `r format(meanStepsTakenPerDay)`.
+The mean of the total number of steps taken per day is 10766.19.
 
-The median of the total number of steps taken per day is `r format(medianStepsTakenPerDay)`.
+The median of the total number of steps taken per day is 10765.
 
 ## What is the average daily activity pattern?
 
@@ -96,7 +113,8 @@ Create a time series plot of the 5-minute interval and the average number of ste
 
 In order to do this, the number of steps are added up for each 5 minute interval across all days. Therefore there is a total number for each interval and not for each day.
 
-```{r}
+
+```r
 # get number of days covered in the data
 firstDay = min(levels(factor(actData[,"date"])))
 lastDay = max(levels(factor(actData[,"date"])))
@@ -117,18 +135,22 @@ fiveMinIntPlot <- plot(x=actData5minInt$interval,
                        xlim=c(0,2500))
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-6-1.png) 
+
 From the list of 5 minute intervals the maximum average per interval is extracted.
-```{r}
+
+```r
 d <- actData5minInt[actData5minInt$meanSteps>184,]["interval"][1,1]
 intervalWithMaxAverage <- d[[1,1]]
 ```
 
-The interval with the maximum average number of steps is `r format(intervalWithMaxAverage)`.
+The interval with the maximum average number of steps is 835.
 
 
 ## Imputing missing values
 The total number of missing values in the dataset is calculated.
-```{r}
+
+```r
 tmp <- rawActData[(is.na(rawActData$steps)) |
                   (is.na(rawActData$date)) |
                   (is.na(rawActData$interval)),]
@@ -136,7 +158,7 @@ tmp <- rawActData[(is.na(rawActData$steps)) |
 numberOfRowsWithNA <- length(tmp[,"steps"])
 ```
 
-There were `r format(numberOfRowsWithNA)` missing in the original data set.
+There were 2304 missing in the original data set.
 
 
 The following strategy is used to fill in all the missing values in the dataset:
@@ -145,7 +167,8 @@ The following strategy is used to fill in all the missing values in the dataset:
 2. Store this in a list.
 3. Fill in the missing values using corresponding time intervals from the list.
 
-```{r}
+
+```r
 tmp2 <- tmp
 for (i in 1:length(tmp2[,1])) {
   tmp2[i,"steps"]<-round(actData5minInt[actData5minInt$interval==tmp2[i,"interval"],][,"meanSteps"][[1,1]])
@@ -160,12 +183,36 @@ for (i in 1:length(tmp[,1])) {
 imputedData <- tmp
 
 head(imputedData)
+```
+
+```
+##   steps       date interval
+## 1     2 2012-10-01        0
+## 2     0 2012-10-01        5
+## 3     0 2012-10-01       10
+## 4     0 2012-10-01       15
+## 5     0 2012-10-01       20
+## 6     2 2012-10-01       25
+```
+
+```r
 tail(imputedData)
+```
+
+```
+##       steps       date interval
+## 17563     2 2012-11-30     2330
+## 17564     4 2012-11-30     2335
+## 17565     3 2012-11-30     2340
+## 17566     1 2012-11-30     2345
+## 17567     0 2012-11-30     2350
+## 17568     1 2012-11-30     2355
 ```
 
 This imputed data is used to create a new data set with the total steps per day calculated.
 
-```{r}
+
+```r
 impDataSet <- group_by(imputedData,
                        date)
 impDataSet <- summarise(impDataSet,
@@ -175,7 +222,8 @@ impDataSet <- summarise(impDataSet,
 This can now be used to make a histogram where missing values have been inserted.
 
 
-```{r}
+
+```r
 stepsHist_imputed <- qplot(impDataSet,
                            geom="histogram",
                            x=impDataSet$date,
@@ -185,26 +233,28 @@ stepsHist_imputed <- qplot(impDataSet,
                            xlab="Date")
 
 stepsHist_imputed
-
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-11-1.png) 
+
 We can also calculate the mean and median of the total number of steps taken per day.
-```{r}
+
+```r
 meanImputedTotalStepsPerDay = mean(impDataSet$totalStepsPerDay)
 medianImputedTotalStepsPerDay = median(impDataSet$totalStepsPerDay)
 ```
 
-Using the imputed data, the mean of the total number of steps taken per day is `r format(meanImputedTotalStepsPerDay)`.
+Using the imputed data, the mean of the total number of steps taken per day is 10622.03.
 
-Using the imputed data, the median of the total number of steps taken per day is `r format(medianImputedTotalStepsPerDay)`.
+Using the imputed data, the median of the total number of steps taken per day is 10395.
 
 Comparing results, we can see that the second histogram has few columns missing from the histogram. This means days where zero steps are reported are removed, since it is unlikely a person would not taken any steps during any single day.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
 A new factor variable is added to the dataset. This variable records either 'weekday' or 'weekend' depending on the corresponding date value.
-```{r}
 
+```r
 impDataSet_withWeekdayFactor <- mutate(impDataSet,
                                        weekday=weekdays(parse_date_time(date,"%Y-%m-%d")))
 impDataSet_withWeekdayFactor <- mutate(impDataSet_withWeekdayFactor,
@@ -218,12 +268,12 @@ imputedData_withWeekdayFactor <- mutate(imputedData_withWeekdayFactor,
                                         weekpart=ifelse((weekday=="Saturday" | weekday=="Sunday"),
                                                         "Weekend",
                                                         "Weekday"))
-
 ```
 
 Create a panel plot showing a time series plot of the 5-minute interval and the average number of steps taken, averaged across all weekday days or weekend days.
 
-```{r}
+
+```r
 # get number of days covered in the data
 firstDay = min(levels(factor(imputedData_withWeekdayFactor[,"date"])))
 lastDay = max(levels(factor(imputedData_withWeekdayFactor[,"date"])))
@@ -246,4 +296,6 @@ panelPlot <- xyplot(meanSteps ~ interval | weekpart,
 
 panelPlot
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-14-1.png) 
 
